@@ -1,6 +1,7 @@
+// controllers/userController.js
 import { Webhook } from "svix";
 import getRawBody from "raw-body";
-import userModel from "../models/userModel.js"; 
+import userModel from "../models/userModel.js";
 import connectDB from "../configs/mongodb.js";
 
 export const config = {
@@ -10,7 +11,8 @@ export const config = {
 };
 
 const clerkWebHooks = async (req, res) => {
-  await connectDB();
+  await connectDB(); // 👈 ensure DB connection
+
   try {
     const payload = (await getRawBody(req)).toString("utf-8");
 
@@ -19,39 +21,55 @@ const clerkWebHooks = async (req, res) => {
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
     };
+    console.log("📦 Headers:", headers);
+console.log("📨 Raw Payload:", payload);
 
     const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
-    const evt = wh.verify(payload, headers);
+   let evt;
+try {
+  evt = wh.verify(payload, headers);
+} catch (err) {
+  console.error("❌ SVIX Verification Failed:", err);
+  return res.status(400).json({ error: "SVIX verification failed" });
+}
 
     const eventType = evt.type;
-    const userData = evt.data;
+    const data = evt.data;
 
     switch (eventType) {
       case "user.created": {
         const newUser = {
-          clerkId: userData.id,
-          email: userData.email_addresses[0]?.email_address,
-          firstname: userData.first_name,
-          lastname: userData.last_name,
-          photo: userData.image_url,
+          clerkId: data.id,
+          email: data.email_addresses?.[0]?.email_address,
+          firstname: data.first_name,
+          lastname: data.last_name,
+          photo: data.image_url,
         };
-        await userModel.create(newUser);
+
+        try {
+          const result = await userModel.create(newUser);
+          console.log("✅ User created:", result);
+        } catch (err) {
+          console.error("❌ Failed to insert user:", err);
+        }
+
         break;
       }
 
       case "user.updated": {
         const updatedUser = {
-          email: userData.email_addresses[0]?.email_address,
-          firstname: userData.first_name,
-          lastname: userData.last_name,
-          photo: userData.image_url,
+          email: data.email_addresses?.[0]?.email_address,
+          firstname: data.first_name,
+          lastname: data.last_name,
+          photo: data.image_url,
         };
-        await userModel.findOneAndUpdate({ clerkId: userData.id }, updatedUser);
+
+        await userModel.findOneAndUpdate({ clerkId: data.id }, updatedUser);
         break;
       }
 
       case "user.deleted": {
-        await userModel.findOneAndDelete({ clerkId: userData.id });
+        await userModel.findOneAndDelete({ clerkId: data.id });
         break;
       }
 
