@@ -1,6 +1,7 @@
 import { Webhook } from "svix";
 import getRawBody from "raw-body";
 import userModel from "../models/userModel.js"; 
+import connectDB from "../configs/mongodb.js";
 
 export const config = {
   api: {
@@ -9,6 +10,7 @@ export const config = {
 };
 
 const clerkWebHooks = async (req, res) => {
+  await connectDB();
   try {
     const payload = (await getRawBody(req)).toString("utf-8");
 
