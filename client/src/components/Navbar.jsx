@@ -48,7 +48,7 @@ const Navbar = () => {
       ) : (
         <button
           onClick={() => openSignIn({})}
-          className="flex items-center gap-2 bg-black text-white px-5 py-2.5 sm:px-8 sm:py-3 text-sm rounded-full border-2 border-black hover:bg-white hover:text-black transition-colors duration-300 cursor-pointer"
+          className="flex items-center gap-2 bg-[#84b211] text-black px-5 py-2.5 sm:px-8 sm:py-3 text-sm rounded-full border-2 border-black hover:bg-[#a2ba63] transition-colors duration-300 cursor-pointer"
         >
           Get Started <ArrowRight size={18} />
         </button>
