@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import { createContext, useState } from "react";
 import axios from 'axios'
